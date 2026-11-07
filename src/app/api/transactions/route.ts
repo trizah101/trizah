@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { guardPermission } from "@/lib/api-auth";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -34,6 +35,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const body = await req.json();
   const t = await prisma.transaction.create({
     data: {
@@ -60,6 +63,8 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const body = await req.json();
   const existing = await prisma.transaction.findUnique({ where: { id: body.id } });
   const t = await prisma.transaction.update({
@@ -98,6 +103,8 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const linkId = searchParams.get("linkId");

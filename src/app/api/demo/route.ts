@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { guardPermission } from "@/lib/api-auth";
 
 export async function POST() {
+  const denied = await guardPermission("system:admin");
+  if (denied) return denied;
   // default wallets
   const existingWallets = await prisma.wallet.count();
   if (existingWallets === 0) {
@@ -84,6 +87,8 @@ export async function POST() {
 }
 
 export async function DELETE() {
+  const denied = await guardPermission("system:admin");
+  if (denied) return denied;
   await prisma.transaction.deleteMany({ where: { isDemo: true } });
   await prisma.supplierPayment.deleteMany({ where: { isDemo: true } });
   await prisma.shipping.deleteMany({ where: { isDemo: true } });

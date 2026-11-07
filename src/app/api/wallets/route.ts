@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { guardPermission } from "@/lib/api-auth";
 
 export async function GET() {
   const wallets = await prisma.wallet.findMany({ orderBy: { createdAt: "asc" } });
@@ -7,6 +8,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const body = await req.json();
   const w = await prisma.wallet.create({
     data: {
@@ -20,6 +23,8 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const body = await req.json();
   const w = await prisma.wallet.update({
     where: { id: body.id },
@@ -34,6 +39,8 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });

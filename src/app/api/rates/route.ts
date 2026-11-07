@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { guardPermission } from "@/lib/api-auth";
 
 const num = (v: any) => (v === "" || v === undefined || v === null ? null : Number(v));
 const dt = (v: any) => (v ? new Date(v) : null);
 
 export async function GET() { return NextResponse.json(await prisma.exchangeRate.findMany({ orderBy: { createdAt: "desc" } })); }
 export async function POST(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const b = await req.json();
   const r = await prisma.exchangeRate.create({ data: {
     pair: b.pair, rate: Number(b.rate), effectiveDate: dt(b.effectiveDate), source: b.source || null,
@@ -14,6 +17,8 @@ export async function POST(req: Request) {
   return NextResponse.json(r);
 }
 export async function PUT(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const b = await req.json();
   const r = await prisma.exchangeRate.update({ where: { id: b.id }, data: {
     pair: b.pair !== undefined ? b.pair : undefined,
@@ -25,6 +30,8 @@ export async function PUT(req: Request) {
   return NextResponse.json(r);
 }
 export async function DELETE(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   await prisma.exchangeRate.delete({ where: { id } });

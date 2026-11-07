@@ -3,8 +3,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useTheme } from "./ThemeProvider";
+import { useAuth } from "./AuthProvider";
+import { UserMenu } from "./UserMenu";
 import {
-  Moon, Sun, LayoutDashboard, BarChart3, LineChart, ArrowLeftRight, Wallet, Coins, Receipt, Package, FileText, CreditCard, Truck, DollarSign, MapPin, ShoppingCart, Layers, TrendingUp, RefreshCw, PieChart, Download, History, Settings, Database, ChevronDown,
+  Moon, Sun, LayoutDashboard, BarChart3, LineChart, ArrowLeftRight, Wallet, Coins, Receipt, Package, FileText, CreditCard, Truck, DollarSign, MapPin, ShoppingCart, Layers, TrendingUp, RefreshCw, PieChart, Download, History, Settings, Database, ChevronDown, Users,
 } from "lucide-react";
 
 type Item = { href: string; label: string; icon: any };
@@ -55,6 +57,7 @@ const GROUPS: Group[] = [
   { title: "SYSTEM", items: [
     { href: "/audit", label: "Activity & Audit History", icon: History },
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/settings/users", label: "Users & Roles", icon: Users },
     { href: "/data-import-export", label: "Data Import / Export", icon: Database },
   ]},
 ];
@@ -62,6 +65,7 @@ const GROUPS: Group[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const { dark, toggle } = useTheme();
+  const { can, loading } = useAuth();
   const [open, setOpen] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     GROUPS.forEach((g) => (init[g.title] = true));
@@ -84,22 +88,28 @@ export function Sidebar() {
             </button>
             {open[g.title] && (
               <div className="space-y-1 mt-1">
-                {g.items.map((n) => {
-                  const Icon = n.icon;
-                  const active = pathname === n.href;
-                  return (
-                    <Link key={n.href} href={n.href}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm ${active ? "bg-zinc-100 dark:bg-zinc-800 font-medium" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"}`}>
-                      <Icon size={16} /> {n.label}
-                    </Link>
-                  );
-                })}
+                {g.items
+                  .filter((n) => {
+                    if (n.href === "/settings/users" && !loading && !can("users:read")) return false;
+                    return true;
+                  })
+                  .map((n) => {
+                    const Icon = n.icon;
+                    const active = pathname === n.href;
+                    return (
+                      <Link key={n.href} href={n.href}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm ${active ? "bg-zinc-100 dark:bg-zinc-800 font-medium" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"}`}>
+                        <Icon size={16} /> {n.label}
+                      </Link>
+                    );
+                  })}
               </div>
             )}
           </div>
         ))}
       </nav>
-      <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+        <UserMenu />
         <button onClick={toggle} className="flex items-center gap-2 text-sm px-3 py-2 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800/50 w-full">
           {dark ? <Sun size={16} /> : <Moon size={16} />} {dark ? "Light mode" : "Dark mode"}
         </button>

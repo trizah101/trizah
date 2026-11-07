@@ -5,7 +5,8 @@ import { money } from "@/lib/utils";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend,
 } from "recharts";
-import { Plus, ArrowLeftRight, Download, Search, X, Filter } from "lucide-react";
+import { Plus, ArrowLeftRight, Download, Search, X, Filter, Lock } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 type Tx = any;
 
@@ -35,6 +36,10 @@ function dateRange(preset: string, customFrom: string, customTo: string, n: Date
 const TX_FILTERS = ["All Transactions", "Money In", "Money Out", "Currency Exchange", "Investment", "Supplier Payment", "Shipping Payment", "Pickup Charge", "Operating Expense", "Amazon Payout", "Inventory Purchase", "Refund / Adjustment"];
 
 export default function Dashboard() {
+  const { can } = useAuth();
+  const canWriteFinance = can("finance:write");
+  const canWriteOperations = can("operations:write");
+
   const [wallets, setWallets] = useState<any[]>([]);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [rates, setRates] = useState<any[]>([]);
@@ -236,21 +241,25 @@ export default function Dashboard() {
   const COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4", "#a855f7"];
 
   const quickActions = [
-    { label: "Add Transaction", onClick: () => setShowAddTx(true) },
-    { label: "Currency Exchange", onClick: () => setShowConv(true) },
-    { label: "Add Investment", href: "/investments" },
-    { label: "Add Supplier Invoice", href: "/suppliers" },
-    { label: "Record Supplier Payment", href: "/supplier-payments" },
-    { label: "Add Shipment", href: "/shipments" },
-    { label: "Record Shipping Payment", href: "/shipping-payments" },
-    { label: "Add Pickup Charge", href: "/pickup-charges" },
-    { label: "Add Product", href: "/products" },
-    { label: "Record Amazon Settlement", href: "/amazon-settlements" },
-    { label: "Add Operating Expense", href: "/expenses" },
-    { label: "Import Transactions", href: "/data-import-export" },
-    { label: "Export Financial Data", href: "/export-reports" },
-    { label: "Transfer Between Wallets", onClick: () => setShowConv(true) },
-  ];
+    { label: "Add Transaction", onClick: () => setShowAddTx(true), write: "finance" },
+    { label: "Currency Exchange", onClick: () => setShowConv(true), write: "finance" },
+    { label: "Add Investment", href: "/investments", write: "finance" },
+    { label: "Add Supplier Invoice", href: "/suppliers", write: "finance" },
+    { label: "Record Supplier Payment", href: "/supplier-payments", write: "finance" },
+    { label: "Add Shipment", href: "/shipments", write: "finance" },
+    { label: "Record Shipping Payment", href: "/shipping-payments", write: "finance" },
+    { label: "Add Pickup Charge", href: "/pickup-charges", write: "finance" },
+    { label: "Add Product", href: "/products", write: "operations" },
+    { label: "Record Amazon Settlement", href: "/amazon-settlements", write: "finance" },
+    { label: "Add Operating Expense", href: "/expenses", write: "finance" },
+    { label: "Import Transactions", href: "/data-import-export", write: "finance" },
+    { label: "Export Financial Data", href: "/export-reports", write: "none" },
+    { label: "Transfer Between Wallets", onClick: () => setShowConv(true), write: "finance" },
+  ].filter((action) => {
+    if (action.write === "none") return true;
+    if (action.write === "finance") return canWriteFinance;
+    return canWriteOperations;
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -260,6 +269,16 @@ export default function Dashboard() {
           <button onClick={() => setAudView(!audView)} className="px-3 py-1 text-sm border rounded">{audView ? "AUD View" : "Original Currency"}</button>
         </div>
       </div>
+
+      {!canWriteFinance ? (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+          <Lock size={15} className="mt-0.5 shrink-0" />
+          <span>
+            Read-only financial access. Your role can view dashboards and reports but cannot create
+            or change financial records.
+          </span>
+        </div>
+      ) : null}
 
       {/* Global Filters */}
       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">

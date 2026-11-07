@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { guardPermission } from "@/lib/api-auth";
 
 export async function GET() {
+  const denied = await guardPermission("finance:read");
+  if (denied) return denied;
   const data = {
     wallets: await prisma.wallet.findMany(),
     transactions: await prisma.transaction.findMany(),
@@ -18,6 +21,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const denied = await guardPermission("system:admin");
+  if (denied) return denied;
   const body = await req.json();
   // wipe
   await prisma.auditLog.deleteMany();

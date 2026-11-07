@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { guardPermission } from "@/lib/api-auth";
 
 const num = (v: any) => (v === "" || v === undefined || v === null ? null : Number(v));
 const dt = (v: any) => (v ? new Date(v) : null);
 
 export async function GET() { return NextResponse.json(await prisma.shipping.findMany({ orderBy: { createdAt: "desc" } })); }
 export async function POST(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const b = await req.json();
   const r = await prisma.shipping.create({ data: {
     agent: b.agent || null, shipmentRef: b.shipmentRef || null, invoiceDate: dt(b.invoiceDate),
@@ -16,6 +19,8 @@ export async function POST(req: Request) {
   return NextResponse.json(r);
 }
 export async function PUT(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const b = await req.json();
   const r = await prisma.shipping.update({ where: { id: b.id }, data: {
     agent: b.agent !== undefined ? (b.agent || null) : undefined,
@@ -33,6 +38,8 @@ export async function PUT(req: Request) {
   return NextResponse.json(r);
 }
 export async function DELETE(req: Request) {
+  const denied = await guardPermission("finance:write");
+  if (denied) return denied;
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   await prisma.shipping.delete({ where: { id } });

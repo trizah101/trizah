@@ -181,3 +181,16 @@ model OpeningBalance {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/// Application profile linked 1:1 to a Supabase auth user (auth.users.id).
+model Profile {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  role      String   @default("viewer") // super_admin | admin | accountant | operations | viewer
+  status    String   @default("pending") // pending | active | suspended
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("profiles")
+}
