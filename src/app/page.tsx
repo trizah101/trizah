@@ -90,6 +90,8 @@ export default function Dashboard() {
   const totalInvValue = inventory.reduce((a, i) => a + (i.totalAudLanded ?? (i.totalRmbLanded ?? 0) * rmbToAud()), 0);
   const totalAmazon = amazon.reduce((a, a2) => a + (a2.netPayout ?? 0), 0);
   const totalExpenses = (totalSupplier + totalShipping + totalPickup) * rmbToAud();
+  const totalRevenue = amazon.reduce((a, a2) => a + (a2.grossSales ?? 0), 0);
+  const totalProfit = totalRevenue - totalExpenses;
 
   const cards = [
     { label: "Total Founder Investment (AUD)", value: money(totalFounderInv, "AUD") },
@@ -103,6 +105,8 @@ export default function Dashboard() {
     { label: "Total Amazon Payouts (AUD)", value: money(totalAmazon, "AUD") },
     { label: "Current Cash (AUD)", value: money(totalCashAud, "AUD") },
     { label: "Operating Expenses (AUD)", value: money(totalExpenses, "AUD") },
+    { label: "Revenue (AUD)", value: money(totalRevenue, "AUD") },
+    { label: "Profit (AUD)", value: money(totalProfit, "AUD") },
   ];
 
   const walletChartData = wallets.map((w) => ({ name: w.name, balance: walletBalance(w) }));
@@ -146,6 +150,48 @@ export default function Dashboard() {
               <Bar dataKey="balance" fill="#6366f1" />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <h3 className="font-semibold mb-2">Recent Transactions</h3>
+          <table className="w-full text-xs">
+            <thead><tr className="text-zinc-500"><th>Date</th><th>Ref</th><th>Type</th><th>Account</th><th>Dir</th><th>Amount</th></tr></thead>
+            <tbody>
+              {txs.slice(0, 10).map((t: any) => (
+                <tr key={t.id} className="border-t border-zinc-100 dark:border-zinc-800">
+                  <td>{t.date ? new Date(t.date).toISOString().slice(0,10) : ""}</td>
+                  <td>{t.referenceId}</td><td>{t.type}</td><td>{t.account}</td><td>{t.direction}</td><td>{money(t.amount, t.currency)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <h3 className="font-semibold mb-2">Currency Exchange Activity</h3>
+          <table className="w-full text-xs">
+            <thead><tr className="text-zinc-500"><th>Ref</th><th>From</th><th>To</th><th>Amount</th><th>Rate</th></tr></thead>
+            <tbody>
+              {txs.filter((t: any) => t.type === "Conversion" && t.direction === "OUT").slice(0, 10).map((t: any) => {
+                const inLeg = txs.find((x: any) => x.linkId === t.linkId && x.direction === "IN");
+                return (
+                  <tr key={t.id} className="border-t border-zinc-100 dark:border-zinc-800">
+                    <td>{t.referenceId}</td><td>{t.currency}</td><td>{inLeg?.currency}</td><td>{money(t.amount, t.currency)}</td><td>{t.exchangeRate}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+        <h3 className="font-semibold mb-2">Upcoming / Outstanding Payments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <div><div className="text-xs text-zinc-500">Supplier Outstanding (RMB)</div><div className="font-semibold">{money(suppliers.reduce((a: any, s: any) => a + Math.max(0, (s.totalRmbPayable ?? 0) - (s.actualRmbPaid ?? 0)), 0), "RMB")}</div></div>
+          <div><div className="text-xs text-zinc-500">Shipping Outstanding (RMB)</div><div className="font-semibold">{money(shipping.reduce((a: any, s: any) => a + Math.max(0, (s.expectedRmb ?? 0) - (s.actualRmbPaid ?? 0)), 0), "RMB")}</div></div>
+          <div><div className="text-xs text-zinc-500">Total RMB Remaining</div><div className="font-semibold">{money(rmbRemaining, "RMB")}</div></div>
         </div>
       </div>
 
