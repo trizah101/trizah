@@ -82,6 +82,25 @@ If you keep the default `{{ .ConfirmationURL }}` templates, the app handles the 
 5. Enable automatic deployments on push to main.
 6. Preview deployments enabled for other branches.
 
+### Go-live checklist (required)
+`NEXT_PUBLIC_*` values are inlined at build time, so they must exist **before** the build and any
+change requires a redeploy.
+
+1. Add these Vercel environment variables (Production, and Preview if desired):
+   - `DATABASE_URL` — copy the pooler URL from `.env` (must include `?sslmode=require`)
+   - `NEXT_PUBLIC_SUPABASE_URL` = `https://<project-ref>.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = the public anon or `sb_publishable_…` key
+   - `NEXT_PUBLIC_SITE_URL` = `https://app.trizah.com`
+   - `SUPER_ADMIN_EMAILS` (optional)
+2. Redeploy (Vercel → Deployments → ⋯ → Redeploy) after adding the variables.
+3. Verify:
+   - `https://app.trizah.com/` redirects to `/login`
+   - `/login` shows the sign-in form, not "Authentication is not configured"
+   - Register the first account; it becomes Super Admin / Active automatically
+4. If `/api/*` returns 500 after sign-in, the server cannot reach PostgreSQL. Check that
+   `DATABASE_URL` is present in Vercel, matches the Supabase pooler string, and that the Supabase
+   project is not paused.
+
 ## 4. DNS (app.trizah.com)
 Create a CNAME record:
 - Host: app
