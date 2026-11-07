@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id            String   @id @default(cuid())
+  name          String
+  currency      String
+  openingBalance Float   @default(0)
+  isDefault     Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Transaction {
+  id               String   @id @default(cuid())
+  date             DateTime
+  referenceId      String
+  type             String
+  account          String
+  direction        String   // IN / OUT
+  currency         String
+  amount           Float
+  exchangeRate     Float?   // rate to convert amount to convertedCurrency? We'll store as given
+  convertedAmount  Float?
+  convertedCurrency String?
+  audEquivalent    Float?
+  counterparty     String?
+  sku              String?
+  asin             String?
+  notes            String?
+  isDemo           Boolean  @default(false)
+  linkId           String?  // for paired conversions
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  auditLogs        AuditLog[]
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  action        String
+  before        String?
+  after         String?
+  createdAt     DateTime @default(now())
+}
+
+model SupplierPayment {
+  id              String   @id @default(cuid())
+  supplier        String
+  invoiceNumber   String?
+  orderDate       DateTime?
+  productName     String?
+  sku             String?
+  asin            String?
+  unitsOrdered    Float?
+  usdPrice        Float?
+  usdToRmbRate    Float?
+  totalRmbPayable Float?
+  actualRmbPaid   Float?
+  paymentStatus   String?  @default("Unpaid")
+  paymentDate     DateTime?
+  audEquivalent   Float?
+  notes           String?
+  isDemo          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Shipping {
+  id               String   @id @default(cuid())
+  agent            String?
+  shipmentRef      String?
+  invoiceDate      DateTime?
+  audCharge        Float?
+  audToRmbRate     Float?
+  expectedRmb      Float?
+  actualRmbPaid    Float?
+  actualAudDebited Float?
+  status           String?  @default("Pending")
+  notes            String?
+  isDemo           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Pickup {
+  id             String   @id @default(cuid())
+  reference      String?
+  supplier       String?
+  location       String?
+  shipmentId     String?
+  rmbCharge      Float?
+  audEquivalent  Float?
+  sku            String?
+  notes          String?
+  isDemo         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model InventoryItem {
+  id               String   @id @default(cuid())
+  sku              String
+  asin             String?
+  productName      String?
+  shipmentId       String?
+  units            Float?
+  supplierCostRmb  Float?
+  shippingCostRmb  Float?
+  pickupCostRmb    Float?
+  otherCostRmb     Float?
+  totalRmbLanded   Float?
+  audCostPerRmb    Float?
+  totalAudLanded   Float?
+  audCostPerUnit   Float?
+  rmbCostPerUnit   Float?
+  allocationMethod String?
+  isDemo           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model AmazonPayout {
+  id               String   @id @default(cuid())
+  settlementId     String?
+  period           String?
+  grossSales       Float?
+  referralFees     Float?
+  fbaFees          Float?
+  advertising      Float?
+  refunds          Float?
+  otherAdjustments Float?
+  netPayout        Float?
+  actualAudReceived Float?
+  account          String?
+  settlementDate   DateTime?
+  notes            String?
+  isDemo           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Investment {
+  id             String   @id @default(cuid())
+  founder        String?
+  date           DateTime?
+  currency       String?
+  amount         Float?
+  rate           Float?
+  audEquivalent  Float?
+  reference      String?
+  type           String?
+  notes          String?
+  isDemo         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ExchangeRate {
+  id        String   @id @default(cuid())
+  pair      String   // e.g. USD->RMB
+  rate      Float
+  effectiveDate DateTime?
+  source    String?
+  reference String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OpeningBalance {
+  id        String @id @default(cuid())
+  walletId  String?
+  amount    Float  @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
