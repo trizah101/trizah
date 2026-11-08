@@ -100,8 +100,8 @@ function VerifyEmailContent() {
         </div>
 
         <div className="mt-6 rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-left text-[11px] leading-5 text-emerald-800">
-          You currently have Viewer access. A Super Admin can assign a higher role from User
-          Management.
+          Your role and permissions are managed by a Super Admin in User Management. You can start
+          working now.
         </div>
 
         <button
