@@ -45,8 +45,16 @@ In Supabase → Authentication → URL Configuration:
 - **Additional Redirect URLs:**
   - `https://app.trizah.com/**`
   - `http://localhost:3000/**`
+  - `http://localhost:3001/**`
 
-### Email templates (recommended)
+### Email delivery (required before onboarding other users)
+Supabase's default email service only delivers to addresses on the project's **Team** tab (currently
+2 messages/hour). Before inviting other users, configure custom SMTP in
+Authentication → Emails → SMTP Settings, then raise the email rate limit. Until then, only team
+addresses can receive verification and recovery messages, and the templates below cannot be edited
+(Supabase blocks template changes while a free project uses the default provider).
+
+### Email templates (recommended, needs custom SMTP)
 The app supports both the default confirmation URL and the cross-browser token-hash flow. For the
 most reliable experience (links opened on a different device), update the email templates to:
 
@@ -97,6 +105,8 @@ change requires a redeploy.
    - `https://app.trizah.com/` redirects to `/login`
    - `/login` shows the sign-in form, not "Authentication is not configured"
    - Register the first account; it becomes Super Admin / Active automatically
+   - For that first registration, use an email on the Supabase organization's Team tab unless
+     custom SMTP is already configured (the default provider only delivers to team addresses).
 4. If `/api/*` returns 500 after sign-in, the server cannot reach PostgreSQL. Check that
    `DATABASE_URL` is present in Vercel, matches the Supabase pooler string, and that the Supabase
    project is not paused.
